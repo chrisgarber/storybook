@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import type { FC, ReactElement } from 'react';
 
+import type { Channel } from 'storybook/internal/channels';
+import { NAVIGATE_URL } from 'storybook/internal/core-events';
 import { styled } from 'storybook/internal/theming';
 
 import * as tocbot from 'tocbot';
@@ -29,7 +31,7 @@ export interface TocParameters {
    *
    * @see tocbot docs {@link https://tscanlin.github.io/tocbot/#usage}
    */
-  unsafeTocbotOptions?: tocbot.IStaticOptions;
+  unsafeTocbotOptions?: Omit<tocbot.IStaticOptions, 'onClick' | 'scrollEndCallback'>;
 }
 
 const Wrapper = styled.div(({ theme }) => ({
@@ -118,6 +120,7 @@ const Heading = styled.p(({ theme }) => ({
 type TableOfContentsProps = React.PropsWithChildren<
   TocParameters & {
     className?: string;
+    channel: Channel;
   }
 >;
 
@@ -138,8 +141,14 @@ export const TableOfContents = ({
   contentsSelector,
   ignoreSelector,
   unsafeTocbotOptions,
+  channel,
 }: TableOfContentsProps) => {
   useEffect(() => {
+    // Do not initialize tocbot when we won't be rendering a ToC.
+    if (disable) {
+      return () => {};
+    }
+
     const configuration = {
       tocSelector: '.toc-wrapper',
       contentSelector: contentsSelector ?? '.sbdocs-content',
@@ -150,7 +159,31 @@ export const TableOfContents = ({
       scrollSmoothOffset: -40,
       orderedList: false,
       /** Prevent default linking behavior, leaving only the smooth scrolling. */
-      onClick: () => false,
+      onClick: (e: MouseEvent) => {
+        e.preventDefault();
+        if (e.currentTarget instanceof HTMLAnchorElement) {
+          const [, headerId] = e.currentTarget.href.split('#');
+          channel.emit(NAVIGATE_URL, `#${headerId}`);
+        }
+      },
+      scrollEndCallback: () => {
+        const scrollEl =
+          document.querySelector(unsafeTocbotOptions?.scrollContainer) || document.documentElement;
+
+        if (scrollEl.scrollTop === 0) {
+          channel.emit(NAVIGATE_URL, '#'); // this removes the whole hash, including the # symbol.
+          return;
+        }
+
+        const activeLinkEl = document.querySelector(
+          `.${unsafeTocbotOptions?.activeLinkClass || 'is-active-link'}`
+        );
+
+        if (activeLinkEl && activeLinkEl instanceof HTMLAnchorElement) {
+          const [, headerId] = activeLinkEl.href.split('#');
+          channel.emit(NAVIGATE_URL, `#${headerId}`);
+        }
+      },
       ...unsafeTocbotOptions,
     };
 
@@ -160,7 +193,7 @@ export const TableOfContents = ({
       clearTimeout(timeout);
       tocbot.destroy();
     };
-  }, [disable]);
+  }, [channel, disable, ignoreSelector, contentsSelector, headingSelector, unsafeTocbotOptions]);
 
   return (
     <>
