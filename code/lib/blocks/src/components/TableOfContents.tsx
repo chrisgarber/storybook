@@ -163,7 +163,7 @@ export const TableOfContents = ({
         e.preventDefault();
         if (e.currentTarget instanceof HTMLAnchorElement) {
           const [, headerId] = e.currentTarget.href.split('#');
-          channel.emit(NAVIGATE_URL, `#${headerId}`);
+          channel.emit(NAVIGATE_URL, `#${encodeURIComponent(headerId)}`);
         }
       },
       ...unsafeTocbotOptions,
