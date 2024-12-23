@@ -166,24 +166,6 @@ export const TableOfContents = ({
           channel.emit(NAVIGATE_URL, `#${headerId}`);
         }
       },
-      scrollEndCallback: () => {
-        const scrollEl =
-          document.querySelector(unsafeTocbotOptions?.scrollContainer) || document.documentElement;
-
-        if (scrollEl.scrollTop === 0) {
-          channel.emit(NAVIGATE_URL, '#'); // this removes the whole hash, including the # symbol.
-          return;
-        }
-
-        const activeLinkEl = document.querySelector(
-          `.${unsafeTocbotOptions?.activeLinkClass || 'is-active-link'}`
-        );
-
-        if (activeLinkEl && activeLinkEl instanceof HTMLAnchorElement) {
-          const [, headerId] = activeLinkEl.href.split('#');
-          channel.emit(NAVIGATE_URL, `#${headerId}`);
-        }
-      },
       ...unsafeTocbotOptions,
     };
 
