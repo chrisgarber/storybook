@@ -76,7 +76,7 @@ Link.displayName = 'QueryLink';
 
 /**
  * A render-prop component where children is called with a location and will be called whenever it
- * changes when it changes
+ * changes
  */
 export const Location = ({ children }: LocationProps) => {
   const location = R.useLocation();
