@@ -2,7 +2,8 @@
 npx http-server ./path/to/build
 ```
 
-```shell renderer="common" language="js" packageManager="yarn2+"
+```shell renderer="common" language="js" packageManager="yarn"
+# note this only works with yarn2+
 yarn dlx http-server ./path/to/build
 ```
 
